@@ -42,6 +42,9 @@ def MENU():
                         help='run strings on all dump files. Saved in output dir.')
     parser.add_argument('--max-size', type=int, help='maximum size of dump file in bytes (def: 20971520)',
                         metavar="bytes")
+    parser.add_argument('--addr', type=str, help='start addreess')
+    parser.add_argument('--size', type=str, help='size')
+    parser.add_argument('--range', type=str, help='range')
     args = parser.parse_args()
     return args
 
@@ -131,6 +134,20 @@ ranges = agent.enumerate_ranges(PERMS)
 if arguments.max_size is not None:
     MAX_SIZE = arguments.max_size
 
+if arguments.range:
+    [a,b] = arguments.range.split("-")
+    start = int(a, 16)
+    size = int(b, 16) - start
+    print("got you there " + hex(start) + " " + str(size))
+    mem_access_viol = dumper.splitter(agent, start, size, MAX_SIZE, mem_access_viol, DIRECTORY)
+    exit(0)
+
+if arguments.addr:
+    print("got you there" + arguments.addr + " " + arguments.size)
+    exit(0)
+
+exit(0)
+
 i = 0
 l = len(ranges)
 
@@ -139,13 +156,10 @@ for range in ranges:
     logging.debug("Base Address: " + str(range["base"]))
     logging.debug("")
     logging.debug("Size: " + str(range["size"]))
-    if range["size"] > MAX_SIZE:
-        logging.debug("Too big, splitting the dump into chunks")
-        mem_access_viol = dumper.splitter(
-            agent, range["base"], range["size"], MAX_SIZE, mem_access_viol, DIRECTORY)
-        continue
-    mem_access_viol = dumper.dump_to_file(
-        agent, range["base"], range["size"], mem_access_viol, DIRECTORY)
+
+    mem_access_viol = dumper.splitter(
+        agent, range["base"], range["size"], MAX_SIZE, mem_access_viol, DIRECTORY)
+
     i += 1
     utils.printProgress(i, l, prefix='Progress:', suffix='Complete', bar=50)
 

@@ -4,13 +4,10 @@ import logging
 # Reading bytes from session and saving it to a file
 
 
-def dump_to_file(agent, base, size, error, directory):
+def dump_to_file(agent, base, size, error, file):
         try:
-                filename = str(base) + '_dump.data'
                 dump = agent.read_memory(base, size)
-                f = open(os.path.join(directory, filename), 'wb')
-                f.write(dump)
-                f.close()
+                file.write(dump)
                 return error
         except Exception as e:
                 logging.debug(str(e))
@@ -27,13 +24,18 @@ def splitter(agent,base,size,max_size,error,directory):
         else:
             logging.debug("Number of chunks:"+str(times))
         global cur_base
-        cur_base = int(base,0)
+        cur_base = base
+
+        f = open(os.path.join(directory, "%x" % (base)), 'wb')
 
         for time in range(times):
                 # logging.debug("Save bytes: "+str(cur_base)+" till "+str(hex(cur_base+max_size)))
-                dump_to_file(agent, cur_base, max_size, error, directory)
+                dump_to_file(agent, cur_base, max_size, error, f)
                 cur_base = cur_base + max_size
 
         if diff is not 0:
             # logging.debug("Save bytes: "+str(hex(cur_base))+" till "+str(hex(cur_base+diff)))
-            dump_to_file(agent, cur_base, diff, error, directory)
+            dump_to_file(agent, cur_base, diff, error, f)
+
+
+        f.close()
